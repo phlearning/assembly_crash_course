@@ -1,0 +1,106 @@
+Welcome to ASMLevel26
+==================================================
+
+To interact with any level you will send raw bytes over stdin to this program.
+To efficiently solve these problems, first run it to see the challenge instructions.
+Then craft, assemble, and pipe your bytes to this program.
+
+For instance, if you write your assembly code in the file asm.S, you can assemble that to an object file:
+  as -o asm.o asm.S
+
+Note that if you want to use Intel syntax for x86 (which, of course, you do), you'll need to add the following to the start of asm.S:
+  .intel_syntax noprefix
+
+Then, you can copy the .text section (your code) to the file asm.bin:
+  objcopy -O binary --only-section=.text asm.o asm.bin
+
+And finally, send that to the challenge:
+  cat ./asm.bin | /challenge/run
+
+You can even run this as one command:
+  as -o asm.o asm.S && objcopy -O binary --only-section=.text ./asm.o ./asm.bin && cat ./asm.bin | /challenge/run
+
+In this level you will be working with control flow manipulation. This involves using instructions
+to both indirectly and directly control the special register `rip`, the instruction pointer.
+You will use instructions such as: jmp, call, cmp, and their alternatives to implement the requested behavior.
+
+We will be testing your code multiple times in this level with dynamic values! This means we will
+be running your code in a variety of random ways to verify that the logic is robust enough to
+survive normal use.
+
+
+
+The last jump type is the indirect jump, which is often used for switch statements in the real world.
+
+Switch statements are a special case of if-statements that use only numbers to determine where the control flow will go.
+
+Here is an example:
+  switch(number):
+    0: jmp do_thing_0
+    1: jmp do_thing_1
+    2: jmp do_thing_2
+    default: jmp do_default_thing
+
+The switch in this example is working on `number`, which can either be 0, 1, or 2.
+
+In the case that `number` is not one of those numbers, the default triggers.
+
+You can consider this a reduced else-if type structure.
+
+In x86, you are already used to using numbers, so it should be no suprise that you can make if statements based on something being an exact number.
+
+In addition, if you know the range of the numbers, a switch statement works very well.
+
+Take for instance the existence of a jump table.
+
+A jump table is a contiguous section of memory that holds addresses of places to jump.
+
+In the above example, the jump table could look like:
+  [0x1337] = address of do_thing_0
+  [0x1337+0x8] = address of do_thing_1
+  [0x1337+0x10] = address of do_thing_2
+  [0x1337+0x18] = address of do_default_thing
+
+Using the jump table, we can greatly reduce the amount of cmps we use.
+
+Now all we need to check is if `number` is greater than 2.
+
+If it is, always do:
+  jmp [0x1337+0x18]
+Otherwise:
+  jmp [jump_table_address + number * 8]
+
+Using the above knowledge, implement the following logic:
+  if rdi is 0:
+    jmp 0x403016
+  else if rdi is 1:
+    jmp 0x4030f5
+  else if rdi is 2:
+    jmp 0x40319f
+  else if rdi is 3:
+    jmp 0x40326d
+  else:
+    jmp 0x403345
+
+Please do the above with the following constraints:
+  Assume rdi will NOT be negative
+  Use no more than 1 cmp instruction
+  Use no more than 3 jumps (of any variant)
+  We will provide you with the number to 'switch' on in rdi.
+  We will provide you with a jump table base address in rsi.
+
+Here is an example table:
+  [0x4043f2] = 0x403016 (addrs will change)
+  [0x4043fa] = 0x4030f5
+  [0x404402] = 0x40319f
+  [0x40440a] = 0x40326d
+  [0x404412] = 0x403345
+
+Please give me your assembly in bytes (up to 0x1000 bytes): 
+Executing your code...
+---------------- CODE ----------------
+0x400000:       cmp     rdi, 3
+0x400004:       jg      0x400009
+0x400006:       jmp     qword ptr [rsi + rdi*8]
+0x400009:       jmp     qword ptr [rsi + 0x20]
+--------------------------------------

@@ -1,0 +1,36 @@
+We'll assume the initial value of rdi is 0x3307c427, as given in the problem statement.
+
+Initial state:
+rdi = 0x3307c427
+rax = unknown (we don't know its initial value)
+
+Step 1: xor rax, rax
+This sets rax to 0.
+rdi = 0x3307c427
+rax = 0x0000000000000000
+
+Step 2: and rdi, 1
+This operation keeps only the least significant bit of rdi.
+rdi = 0x0000000000000001 (because 0x3307c427 is an odd number, its least significant bit is 1)
+rax = 0x0000000000000000
+
+Step 3: xor rdi, 1
+This flips the least significant bit of rdi.
+rdi = 0x0000000000000000 (1 XOR 1 = 0)
+rax = 0x0000000000000000
+
+Step 4: xor rax, rdi
+This XORs rax with rdi, which effectively copies the value of rdi to rax.
+rdi = 0x0000000000000000
+rax = 0x0000000000000000
+
+Final state:
+rdi = 0x0000000000000000
+rax = 0x0000000000000000
+
+In this case, the input (0x3307c427) was an odd number, so the final result in rax is 0, which correctly implements the logic:
+if x is even then
+y = 1
+else
+y = 0
+If we had started with an even number in rdi, the final value of rax would have been 1.
