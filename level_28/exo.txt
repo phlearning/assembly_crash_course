@@ -1,0 +1,79 @@
+Welcome to ASMLevel28
+==================================================
+
+To interact with any level you will send raw bytes over stdin to this program.
+To efficiently solve these problems, first run it to see the challenge instructions.
+Then craft, assemble, and pipe your bytes to this program.
+
+For instance, if you write your assembly code in the file asm.S, you can assemble that to an object file:
+  as -o asm.o asm.S
+
+Note that if you want to use Intel syntax for x86 (which, of course, you do), you'll need to add the following to the start of asm.S:
+  .intel_syntax noprefix
+
+Then, you can copy the .text section (your code) to the file asm.bin:
+  objcopy -O binary --only-section=.text asm.o asm.bin
+
+And finally, send that to the challenge:
+  cat ./asm.bin | /challenge/run
+
+You can even run this as one command:
+  as -o asm.o asm.S && objcopy -O binary --only-section=.text ./asm.o ./asm.bin && cat ./asm.bin | /challenge/run
+
+In this level you will be working with control flow manipulation. This involves using instructions
+to both indirectly and directly control the special register `rip`, the instruction pointer.
+You will use instructions such as: jmp, call, cmp, and their alternatives to implement the requested behavior.
+
+We will be testing your code multiple times in this level with dynamic values! This means we will
+be running your code in a variety of random ways to verify that the logic is robust enough to
+survive normal use.
+
+
+
+In previous levels you discovered the for-loop to iterate for a *number* of times, both dynamically and
+statically known, but what happens when you want to iterate until you meet a condition?
+
+A second loop structure exists called the while-loop to fill this demand.
+
+In the while-loop you iterate until a condition is met.
+
+As an example, say we had a location in memory with adjacent numbers and we wanted
+to get the average of all the numbers until we find one bigger or equal to 0xff:
+  average = 0
+  i = 0
+  while x[i] < 0xff:
+    average += x[i]
+    i += 1
+  average /= i
+
+Using the above knowledge, please perform the following:
+  Count the consecutive non-zero bytes in a contiguous region of memory, where:
+    rdi = memory address of the 1st byte
+    rax = number of consecutive non-zero bytes
+
+Additionally, if rdi = 0, then set rax = 0 (we will check)!
+
+An example test-case, let:
+  rdi = 0x1000
+  [0x1000] = 0x41
+  [0x1001] = 0x42
+  [0x1002] = 0x43
+  [0x1003] = 0x00
+
+then: rax = 3 should be set
+
+We will now run multiple tests on your code, here is an example run:
+  (data) [0x404000] = {10 random bytes},
+  rdi = 0x404000
+
+Please give me your assembly in bytes (up to 0x1000 bytes): 
+Executing your code...
+---------------- CODE ----------------
+0x400000:       xor     rax, rax
+0x400003:       test    rdi, rdi
+0x400006:       je      0x400013
+0x400008:       cmp     byte ptr [rdi + rax], 0
+0x40000c:       je      0x400013
+0x40000e:       inc     rax
+0x400011:       jmp     0x400008
+--------------------------------------
