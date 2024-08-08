@@ -1,0 +1,140 @@
+Welcome to ASMLevel30
+==================================================
+
+To interact with any level you will send raw bytes over stdin to this program.
+To efficiently solve these problems, first run it to see the challenge instructions.
+Then craft, assemble, and pipe your bytes to this program.
+
+For instance, if you write your assembly code in the file asm.S, you can assemble that to an object file:
+  as -o asm.o asm.S
+
+Note that if you want to use Intel syntax for x86 (which, of course, you do), you'll need to add the following to the start of asm.S:
+  .intel_syntax noprefix
+
+Then, you can copy the .text section (your code) to the file asm.bin:
+  objcopy -O binary --only-section=.text asm.o asm.bin
+
+And finally, send that to the challenge:
+  cat ./asm.bin | /challenge/run
+
+You can even run this as one command:
+  as -o asm.o asm.S && objcopy -O binary --only-section=.text ./asm.o ./asm.bin && cat ./asm.bin | /challenge/run
+
+We will be testing your code multiple times in this level with dynamic values! This means we will
+be running your code in a variety of random ways to verify that the logic is robust enough to
+survive normal use.
+
+In this level you will be working with functions! This will involve manipulating the instruction pointer (rip),
+as well as doing harder tasks than normal. You may be asked to use the stack to store values
+or call functions that we provide you.
+
+
+
+In the previous level, you learned how to make your first function and how to call other functions.
+
+Now we will work with functions that have a function stack frame.
+
+A function stack frame is a set of pointers and values pushed onto the stack to save things for later use and allocate space on the stack for function variables.
+
+First, let's talk about the special register rbp, the Stack Base Pointer.
+
+The rbp register is used to tell where our stack frame first started.
+
+As an example, say we want to construct some list (a contigous space of memory) that is only used in our function.
+
+The list is 5 elements long, and each element is a dword.
+
+A list of 5 elements would already take 5 registers, so instead, we can make space on the stack!
+
+The assembly would look like:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; setup the base of the stack as the current top
+mov rbp, rsp
+; move the stack 0x14 bytes (5 * 4) down
+; acts as an allocation
+sub rsp, 0x14
+; assign list[2] = 1337
+mov eax, 1337
+mov [rbp-0x8], eax
+; do more operations on the list ...
+; restore the allocated space
+mov rsp, rbp
+ret
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Notice how rbp is always used to restore the stack to where it originally was.
+
+If we don't restore the stack after use, we will eventually run out.
+
+In addition, notice how we subtracted from rsp, because the stack grows down.
+
+To make the stack have more space, we subtract the space we need.
+
+The ret and call still works the same.
+
+Once, again, please make function(s) that implements the following:
+most_common_byte(src_addr, size):
+  i = 0
+  while i <= size-1:
+    curr_byte = [src_addr + i]
+    [stack_base - curr_byte] += 1
+    i += 1
+
+  b = 0
+  max_freq = 0
+  max_freq_byte = 0
+  while b <= 0xff:
+    if [stack_base - b] > max_freq:
+      max_freq = [stack_base - b]
+      max_freq_byte = b
+    b += 1
+
+  return max_freq_byte
+
+Assumptions:
+  There will never be more than 0xffff of any byte
+  The size will never be longer than 0xffff
+  The list will have at least one element
+Constraints:
+  You must put the "counting list" on the stack
+  You must restore the stack like in a normal function
+  You cannot modify the data at src_addr
+
+Please give me your assembly in bytes (up to 0x1000 bytes): 
+Executing your code...
+---------------- CODE ----------------
+0x400000:       push    rbp
+0x400001:       mov     rbp, rsp
+0x400004:       sub     rsp, 0x400
+0x40000b:       lea     rbx, [rbp - 0x400]
+0x400012:       xor     rcx, rcx
+0x400015:       mov     dword ptr [rbx + rcx*4], 0
+0x40001c:       inc     rcx
+0x40001f:       cmp     rcx, 0x100
+0x400026:       jl      0x400015
+0x400028:       xor     rdx, rdx
+0x40002b:       cmp     rdx, rsi
+0x40002e:       jge     0x400044
+0x400030:       movzx   rax, byte ptr [rdi + rdx]
+0x400035:       lea     rbx, [rbp - 0x400]
+0x40003c:       inc     dword ptr [rbx + rax*4]
+0x40003f:       inc     rdx
+0x400042:       jmp     0x40002b
+0x400044:       xor     rbx, rbx
+0x400047:       xor     rcx, rcx
+0x40004a:       xor     rdx, rdx
+0x40004d:       cmp     rbx, 0x100
+0x400054:       jge     0x40006d
+0x400056:       lea     rax, [rbp - 0x400]
+0x40005d:       mov     eax, dword ptr [rax + rbx*4]
+0x400060:       cmp     eax, ecx
+0x400062:       jle     0x400068
+0x400064:       mov     ecx, eax
+0x400066:       mov     edx, ebx
+0x400068:       inc     rbx
+0x40006b:       jmp     0x40004d
+0x40006d:       mov     rax, rdx
+0x400070:       mov     rsp, rbp
+0x400073:       pop     rbp
+0x400074:       ret   
+--------------------------------------
