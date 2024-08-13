@@ -6,55 +6,50 @@ most_common_byte:
 
     push rbp
     mov rbp, rsp
-    sub rsp, 1024
+    sub rsp, 256
 
-    lea rbx, [rbp - 1024]
     xor rcx, rcx
 
 initialize_counting_list_with_zero:
-    mov dword ptr [rbx + rcx * 4], 0
+    mov byte ptr [rbp + rcx - 256], 0
     inc rcx
     cmp rcx, 256
     jl initialize_counting_list_with_zero
 
-    xor rdx, rdx
+    xor rcx, rcx
 
 count_bytes:
+    movzx eax, byte ptr [rdi + rcx]
+    inc byte ptr [ rbp + rax - 256]
+    inc rcx
+    cmp rcx, rsi
+    jl count_bytes
 
-    cmp rdx, rsi
-    jge count_bytes_done
 
-    movzx rax, byte ptr [rdi + rdx]
-    lea rbx, [rbp - 1024]
-    inc dword ptr [rbx + rax * 4]
-
-    inc rdx
-    jmp count_bytes
-
-count_bytes_done:
-    xor rbx, rbx
+init_b_max_freq_max_freq_byte:
     xor rcx, rcx
     xor rdx, rdx
-
-find_most_common_byte:
-    cmp rbx, 256
-    jge find_most_common_byte_done
+    xor rbx, rbx
     
-    lea rax, [rbp - 1024]
-    mov eax, dword ptr [rax + rbx * 4]
-    cmp eax, ecx
+find_most_common_byte:
+    movzx eax, byte ptr [rbp + rcx - 256]
+    cmp al, dl
     jle next_byte
-    mov ecx, eax
-    mov edx, ebx
+
+update_max_freq_and_max_freq_byte:
+    mov dl, al
+    mov bl, cl    
 
 next_byte:
-    inc rbx
-    jmp find_most_common_byte
+    inc rcx
+    cmp rcx, 256
+    jl find_most_common_byte
 
 
-find_most_common_byte_done:
-    mov rax, rdx
+return:
+    mov al, bl
 
+restore:
     mov rsp, rbp
     pop rbp
     ret
