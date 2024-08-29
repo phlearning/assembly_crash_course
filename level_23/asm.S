@@ -3,7 +3,7 @@
 .global _start
 
 _start:
-    jmp target
+    jmp $ + 0x53
     .rept 0x51
     nop
     .endr
